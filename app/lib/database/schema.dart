@@ -43,19 +43,7 @@ class DatabaseSchema {
       updated_at INTEGER NOT NULL,
       FOREIGN KEY (parent_location_id) REFERENCES locations(id) ON DELETE CASCADE,
       FOREIGN KEY (parent_container_id) REFERENCES containers(id) ON DELETE CASCADE,
-      CHECK (parent_location_id IS NOT NULL OR parent_container_id IS NOT NULL)
+      CHECK ((parent_location_id IS NOT NULL AND parent_container_id IS NULL) OR (parent_location_id IS NULL AND parent_container_id IS NOT NULL))
     )
   ''';
-
-  // Indexes
-  static const List<String> indexes = [
-    'CREATE INDEX IF NOT EXISTS idx_locations_name ON locations(name)',
-    'CREATE INDEX IF NOT EXISTS idx_locations_qr_code ON locations(qr_code_id)',
-    'CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)',
-    'CREATE INDEX IF NOT EXISTS idx_items_location_id ON items(location_id)',
-    'CREATE INDEX IF NOT EXISTS idx_containers_name ON containers(name)',
-    'CREATE INDEX IF NOT EXISTS idx_containers_parent_location ON containers(parent_location_id)',
-    'CREATE INDEX IF NOT EXISTS idx_containers_parent_container ON containers(parent_container_id)',
-    'CREATE INDEX IF NOT EXISTS idx_containers_type ON containers(type)',
-  ];
 }
