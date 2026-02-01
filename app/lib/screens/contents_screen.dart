@@ -10,6 +10,7 @@ import '../theme/colors.dart';
 import '../theme/spacing.dart';
 import '../theme/typography.dart';
 import '../widgets/card.dart';
+import 'item_detail_screen.dart';
 
 // ================================
 // CONTENTS SOURCE SEALED CLASS
@@ -147,6 +148,16 @@ class _ContentsScreenState extends State<ContentsScreen> {
     );
   }
 
+  /// Navigates to the item detail screen.
+  void _navigateToItemDetail(Item item) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ItemDetailScreen(item: item),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -227,6 +238,7 @@ class _ContentsScreenState extends State<ContentsScreen> {
                 child: AppCard.item(
                   name: item.name,
                   description: item.description,
+                  onTap: () => _navigateToItemDetail(item),
                 ),
               )),
         ],

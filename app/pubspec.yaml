@@ -28,6 +28,9 @@ dependencies:
   # Value equality for domain entities
   equatable: ^2.0.5
 
+  # Date formatting and internationalization
+  intl: ^0.19.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
