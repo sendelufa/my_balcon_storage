@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'theme/app_theme.dart';
 import 'theme/colors.dart';
 import 'theme/typography.dart';
+import 'screens/locations_list_screen.dart';
 
 void main() {
   runApp(const StorageApp());
@@ -18,7 +19,7 @@ class StorageApp extends StatelessWidget {
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
       themeMode: ThemeMode.system,
-      home: const SplashScreen(),
+      home: const LocationsListScreen(),
     );
   }
 }

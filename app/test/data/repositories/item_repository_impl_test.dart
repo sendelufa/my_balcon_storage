@@ -1325,7 +1325,7 @@ void main() {
 /// Mock Database class for testing.
 /// Test-only DatabaseException subclass for simulating database errors.
 class _TestDatabaseException extends DatabaseException {
-  _TestDatabaseException(String message) : super(message);
+  _TestDatabaseException(super.message);
 
   @override
   int? getResultCode() => null;

@@ -60,7 +60,7 @@ class DatabaseTestHelpers {
   /// Count rows in a table.
   static Future<int> countRows(Database db, String table) async {
     final result = await db.rawQuery('SELECT COUNT(*) as count FROM $table');
-    return Sqflite.firstIntValue(result) ?? 0;
+    return result.first['count'] as int;
   }
 }
 

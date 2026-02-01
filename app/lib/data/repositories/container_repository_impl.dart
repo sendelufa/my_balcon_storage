@@ -287,7 +287,8 @@ class ContainerRepositoryImpl implements ContainerRepository {
         'SELECT COUNT(*) as count FROM $_tableName',
       );
 
-      return Sqflite.firstIntValue(result) ?? 0;
+      final firstRow = result.first;
+      return firstRow['count'] as int;
     } catch (e, stackTrace) {
       throw ContainerRepositoryException(
         'Failed to count containers',
