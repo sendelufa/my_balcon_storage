@@ -18,7 +18,7 @@ RULES:
 | Task ID | Task | Acceptance Criteria | Estimated Hours |
 |---------|------|---------------------|-----------------|
 | 1.1.1 | Choose cross-platform framework (React Native, Flutter, or Ionic) | Decision documented with pros/cons analysis | 2 |
-| 1.1.2 | Initialize project with selected framework | Project builds successfully on both platforms | 2 |
+| 1.1.2 | Initialize project with selected framework | Project builds successfully on ios and android platforms | 2 |
 | 1.1.3 | Configure development environment for Android | Android Studio installed, emulator working, app runs | 4 |
 | 1.1.4 | Configure development environment for iOS | Xcode installed, simulator working, app runs | 4 |
 | 1.1.5 | Set up version control (Git) with .gitignore | Repository initialized, proper ignores configured | 1 |

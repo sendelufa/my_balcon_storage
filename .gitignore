@@ -1,0 +1,22 @@
+# Storage Project - Root .gitignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Claude
+.claude/settings.local.json
+
+# Project specific
+*.log
+.env
+.env.local
+
+# Task files (keep completed ones)
+# task_*.md
