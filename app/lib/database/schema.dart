@@ -2,7 +2,7 @@
 /// This is the single source of truth for all database schema.
 class DatabaseSchema {
   // Current database version
-  static const int version = 2;
+  static const int version = 3;
 
   // Tables
   static const String createLocationsTable = '''
@@ -24,9 +24,11 @@ class DatabaseSchema {
       description TEXT,
       photo_path TEXT,
       location_id INTEGER NOT NULL,
+      container_id INTEGER,
       created_at INTEGER NOT NULL,
       updated_at INTEGER NOT NULL,
-      FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE
+      FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
+      FOREIGN KEY (container_id) REFERENCES containers(id) ON DELETE CASCADE
     )
   ''';
 

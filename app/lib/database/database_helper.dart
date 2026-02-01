@@ -51,6 +51,7 @@ class DatabaseHelper {
     // Run all migrations to bring database from 0 to current version
     await _migrateToVersion1(db);
     await _migrateToVersion2(db);
+    await _migrateToVersion3(db);
   }
 
   /// Upgrade database from oldVersion to newVersion.
@@ -62,6 +63,9 @@ class DatabaseHelper {
     }
     if (oldVersion < 2 && newVersion >= 2) {
       await _migrateToVersion2(db);
+    }
+    if (oldVersion < 3 && newVersion >= 3) {
+      await _migrateToVersion3(db);
     }
   }
 
@@ -93,6 +97,19 @@ class DatabaseHelper {
     await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_parent_location ON containers(parent_location_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_parent_container ON containers(parent_container_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_type ON containers(type)');
+  }
+
+  /// Migration to version 3: Add container_id to items table.
+  Future<void> _migrateToVersion3(Database db) async {
+    // Add container_id column to items
+    await db.execute('ALTER TABLE items ADD COLUMN container_id INTEGER');
+
+    // Create index
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_container_id ON items(container_id)');
+
+    // Also add container_id FK constraint (SQLite limitation: can't add FK via ALTER TABLE)
+    // For existing databases, we'll rely on app-level validation
+    // New databases will have the FK from the schema
   }
 
   /// Seed database with sample data for first run.
