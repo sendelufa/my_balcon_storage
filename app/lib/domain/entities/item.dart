@@ -20,6 +20,9 @@ class Item extends Equatable {
   /// The ID of the location where this item is stored.
   final int locationId;
 
+  /// Optional ID of the container where this item is stored.
+  final int? containerId;
+
   /// Timestamp when the item was created (milliseconds since epoch).
   final int createdAt;
 
@@ -34,6 +37,7 @@ class Item extends Equatable {
     required this.updatedAt,
     this.description,
     this.photoPath,
+    this.containerId,
   });
 
   /// Creates an [Item] from a map (typically from database row).
@@ -44,6 +48,7 @@ class Item extends Equatable {
       description: map['description'] as String?,
       photoPath: map['photo_path'] as String?,
       locationId: map['location_id'] as int,
+      containerId: map['container_id'] as int?,
       createdAt: map['created_at'] as int,
       updatedAt: map['updated_at'] as int,
     );
@@ -57,6 +62,7 @@ class Item extends Equatable {
       'description': description,
       'photo_path': photoPath,
       'location_id': locationId,
+      'container_id': containerId,
       'created_at': createdAt,
       'updated_at': updatedAt,
     };
@@ -69,6 +75,7 @@ class Item extends Equatable {
     String? description,
     String? photoPath,
     int? locationId,
+    int? containerId,
     int? createdAt,
     int? updatedAt,
   }) {
@@ -78,6 +85,7 @@ class Item extends Equatable {
       description: description ?? this.description,
       photoPath: photoPath ?? this.photoPath,
       locationId: locationId ?? this.locationId,
+      containerId: containerId ?? this.containerId,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
     );
@@ -90,6 +98,7 @@ class Item extends Equatable {
         description,
         photoPath,
         locationId,
+        containerId,
         createdAt,
         updatedAt,
       ];
