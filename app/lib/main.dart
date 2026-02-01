@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'theme/app_theme.dart';
+import 'theme/colors.dart';
+import 'theme/typography.dart';
 
 void main() {
   runApp(const StorageApp());
@@ -12,10 +15,9 @@ class StorageApp extends StatelessWidget {
     return MaterialApp(
       title: 'Storage App',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: ThemeMode.system,
       home: const SplashScreen(),
     );
   }
@@ -26,19 +28,30 @@ class SplashScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Scaffold(
+    return Scaffold(
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.inventory_2_outlined, size: 80, color: Colors.blue),
-            SizedBox(height: 16),
+            Icon(
+              Icons.inventory_2_outlined,
+              size: 80,
+              color: AppColors.primary,
+            ),
+            const SizedBox(height: 16),
             Text(
               'Storage App',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: AppTypography.h3.copyWith(
+                color: AppColors.textPrimaryLight,
+              ),
             ),
-            SizedBox(height: 8),
-            Text('Coming soon...', style: TextStyle(color: Colors.grey)),
+            const SizedBox(height: 8),
+            Text(
+              'Coming soon...',
+              style: AppTypography.bodyMedium.copyWith(
+                color: AppColors.textSecondaryLight,
+              ),
+            ),
           ],
         ),
       ),
