@@ -1,0 +1,94 @@
+import 'package:flutter/material.dart';
+import '../domain/entities/location.dart';
+import '../domain/repositories/location_repository.dart';
+import '../data/repositories/location_repository_impl.dart';
+import '../theme/spacing.dart';
+import '../widgets/card.dart';
+import 'contents_screen.dart';
+
+/// Minimal locations list screen.
+///
+/// Displays a list of locations from the database.
+/// Shows loading state while fetching and handles errors gracefully.
+class LocationsListScreen extends StatefulWidget {
+  const LocationsListScreen({super.key});
+
+  @override
+  State<LocationsListScreen> createState() => _LocationsListScreenState();
+}
+
+class _LocationsListScreenState extends State<LocationsListScreen> {
+  late final LocationRepository _repository;
+  List<Location> _locations = [];
+  bool _isLoading = true;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _repository = LocationRepositoryImpl();
+    _loadLocations();
+  }
+
+  Future<void> _loadLocations() async {
+    try {
+      final locations = await _repository.getAll();
+      setState(() {
+        _locations = locations;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _error = e.toString();
+        _isLoading = false;
+      });
+    }
+  }
+
+  /// Navigates to the contents screen for a specific location.
+  void _navigateToLocation(Location location) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ContentsScreen(
+          source: LocationSource(location),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (_isLoading) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Locations')),
+        body: const Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_error != null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Locations')),
+        body: Center(child: Text('Error: $_error')),
+      );
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Locations')),
+      body: ListView.separated(
+        padding: const EdgeInsets.all(AppSpacing.md),
+        itemCount: _locations.length,
+        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
+        itemBuilder: (context, index) {
+          final location = _locations[index];
+          return AppCard.location(
+            name: location.name,
+            description: location.description ?? '',
+            itemCount: 0, // TODO: fetch actual count
+            onTap: () => _navigateToLocation(location),
+          );
+        },
+      ),
+    );
+  }
+}
