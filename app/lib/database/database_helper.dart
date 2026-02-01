@@ -46,138 +46,129 @@ class DatabaseHelper {
   }
 
   /// Create database tables on first run.
-  /// Runs all migrations from version 0 to current version.
+  /// Runs all migrations to bring database from 0 to current version.
   Future<void> _onCreate(Database db, int version) async {
-    // Run all migrations to bring database from 0 to current version
-    await _migrateToVersion1(db);
-    await _migrateToVersion2(db);
-    await _migrateToVersion3(db);
+    // Create all tables first
+    await _createTables(db);
+
+    // Then seed all data
+    await _seedAllData(db);
   }
 
   /// Upgrade database from oldVersion to newVersion.
-  /// Applies migrations incrementally for each version step.
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    // Apply migrations incrementally
-    if (oldVersion < 1 && newVersion >= 1) {
-      await _migrateToVersion1(db);
-    }
-    if (oldVersion < 2 && newVersion >= 2) {
-      await _migrateToVersion2(db);
-    }
-    if (oldVersion < 3 && newVersion >= 3) {
-      await _migrateToVersion3(db);
-    }
+    // For development: just recreate everything if upgrading
+    // In production, you'd want proper incremental migrations
+    await _dropAllTables(db);
+    await _createTables(db);
+    await _seedAllData(db);
   }
 
-  /// Migration to version 1: Create Locations and Items tables.
-  Future<void> _migrateToVersion1(Database db) async {
+  /// Create all tables with their final schema.
+  Future<void> _createTables(Database db) async {
     // Create Locations table
     await db.execute(DatabaseSchema.createLocationsTable);
 
-    // Create Items table
+    // Create Items table (with container_id)
     await db.execute(DatabaseSchema.createItemsTable);
 
-    // Create indexes for version 1
+    // Create Containers table
+    await db.execute(DatabaseSchema.createContainersTable);
+
+    // Create all indexes
     await db.execute('CREATE INDEX IF NOT EXISTS idx_locations_name ON locations(name)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_locations_qr_code ON locations(qr_code_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_items_location_id ON items(location_id)');
-
-    // Seed initial sample data
-    await _seedDatabase(db);
-  }
-
-  /// Migration to version 2: Create Containers table.
-  Future<void> _migrateToVersion2(Database db) async {
-    // Create Containers table
-    await db.execute(DatabaseSchema.createContainersTable);
-
-    // Create indexes for containers
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_container_id ON items(container_id) WHERE container_id IS NOT NULL');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_name ON containers(name)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_parent_location ON containers(parent_location_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_parent_container ON containers(parent_container_id)');
     await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_type ON containers(type)');
   }
 
-  /// Migration to version 3: Add container_id to items table.
-  Future<void> _migrateToVersion3(Database db) async {
-    // Check if column already exists before adding (prevents migration failure if run twice)
-    final tableInfo = await db.rawQuery('PRAGMA table_info(items)');
-    final hasContainerId = tableInfo.any((row) => row['name'] == 'container_id');
-
-    if (!hasContainerId) {
-      await db.execute('ALTER TABLE items ADD COLUMN container_id INTEGER');
-    }
-
-    // Check if partial index already exists (from previous migration run)
-    final indexInfo = await db.rawQuery(
-      "SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_items_container_id'",
-    );
-
-    if (indexInfo.isEmpty) {
-      // Create partial index for better performance (only index non-null values)
-      await db.execute(
-        'CREATE INDEX idx_items_container_id ON items(container_id) WHERE container_id IS NOT NULL',
-      );
-    } else {
-      // Index already exists - verify it's the partial version
-      final existingSql = indexInfo.first['sql'] as String? ?? '';
-      if (!existingSql.contains('WHERE container_id IS NOT NULL')) {
-        // Drop non-partial index and recreate as partial
-        await db.execute('DROP INDEX IF EXISTS idx_items_container_id');
-        await db.execute(
-          'CREATE INDEX idx_items_container_id ON items(container_id) WHERE container_id IS NOT NULL',
-        );
-      }
-    }
-
-    // Note: SQLite limitation prevents adding FK constraint via ALTER TABLE
-    // For existing databases, we rely on app-level validation
-    // New databases will have the FK from the schema
-  }
-
-  /// Seed database with sample data for first run.
-  /// Creates 2 locations with 2 items each.
-  Future<void> _seedDatabase(Database db) async {
+  /// Seed all sample data (locations, containers, items).
+  Future<void> _seedAllData(Database db) async {
     final now = currentTime;
 
-    // Insert sample locations
-    final location1Id = await db.insert('locations', {
+    // Check if data already exists
+    final existingLocations = await db.query('locations', limit: 1);
+    if (existingLocations.isNotEmpty) {
+      return; // Already seeded
+    }
+
+    // Insert locations
+    final garageId = await db.insert('locations', {
       'name': 'Garage',
       'description': 'Main storage area in the garage',
       'created_at': now,
       'updated_at': now,
     });
 
-    final location2Id = await db.insert('locations', {
+    final basementId = await db.insert('locations', {
       'name': 'Basement',
       'description': 'Storage shelves in the basement',
       'created_at': now,
       'updated_at': now,
     });
 
-    // Insert sample items for Garage (location1Id)
+    // Insert containers for Garage
+    final garageShelfId = await db.insert('containers', {
+      'name': 'Wall Shelf',
+      'type': 'shelf',
+      'description': 'Mounted shelf on the back wall',
+      'parent_location_id': garageId,
+      'parent_container_id': null,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    final garageBoxId = await db.insert('containers', {
+      'name': 'Tools Box',
+      'type': 'box',
+      'description': 'Plastic storage box for tools',
+      'parent_location_id': garageId,
+      'parent_container_id': null,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    // Insert containers for Basement
+    final basementShelfId = await db.insert('containers', {
+      'name': 'Metal Rack',
+      'type': 'shelf',
+      'description': 'Heavy-duty metal storage rack',
+      'parent_location_id': basementId,
+      'parent_container_id': null,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    final basementBagId = await db.insert('containers', {
+      'name': 'Seasonal Clothes Bag',
+      'type': 'bag',
+      'description': 'Vacuum-sealed bag for winter clothes',
+      'parent_location_id': basementId,
+      'parent_container_id': null,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    // Items directly in locations
     await db.insert('items', {
       'name': 'Christmas Decorations',
       'description': 'Holiday ornaments and lights',
-      'location_id': location1Id,
+      'location_id': garageId,
+      'container_id': null,
       'created_at': now,
       'updated_at': now,
     });
 
     await db.insert('items', {
-      'name': 'Camping Gear',
-      'description': 'Tent, sleeping bags, and camping equipment',
-      'location_id': location1Id,
-      'created_at': now,
-      'updated_at': now,
-    });
-
-    // Insert sample items for Basement (location2Id)
-    await db.insert('items', {
-      'name': 'Tools',
-      'description': 'Power tools and hand tools',
-      'location_id': location2Id,
+      'name': 'Bicycle',
+      'description': 'Mountain bike - stored on floor',
+      'location_id': garageId,
+      'container_id': null,
       'created_at': now,
       'updated_at': now,
     });
@@ -185,10 +176,73 @@ class DatabaseHelper {
     await db.insert('items', {
       'name': 'Old Books',
       'description': 'Books stored for safekeeping',
-      'location_id': location2Id,
+      'location_id': basementId,
+      'container_id': null,
       'created_at': now,
       'updated_at': now,
     });
+
+    // Items in Garage containers
+    await db.insert('items', {
+      'name': 'Extension Cord',
+      'description': '50ft outdoor extension cord',
+      'location_id': garageId,
+      'container_id': garageShelfId,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    await db.insert('items', {
+      'name': 'Screwdriver Set',
+      'description': 'Various Phillips and flathead screwdrivers',
+      'location_id': garageId,
+      'container_id': garageBoxId,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    await db.insert('items', {
+      'name': 'Hammer',
+      'description': 'Claw hammer for general use',
+      'location_id': garageId,
+      'container_id': garageBoxId,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    await db.insert('items', {
+      'name': 'Wrench Set',
+      'description': 'Metric and SAE wrenches',
+      'location_id': basementId,
+      'container_id': basementShelfId,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    await db.insert('items', {
+      'name': 'Winter Coat',
+      'description': 'Heavy winter parka',
+      'location_id': basementId,
+      'container_id': basementBagId,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    await db.insert('items', {
+      'name': 'Winter Boots',
+      'description': 'Insulated snow boots',
+      'location_id': basementId,
+      'container_id': basementBagId,
+      'created_at': now,
+      'updated_at': now,
+    });
+  }
+
+  /// Drop all tables (for development reset).
+  Future<void> _dropAllTables(Database db) async {
+    await db.execute('DROP TABLE IF EXISTS items');
+    await db.execute('DROP TABLE IF EXISTS containers');
+    await db.execute('DROP TABLE IF EXISTS locations');
   }
 
   /// Close the database connection.

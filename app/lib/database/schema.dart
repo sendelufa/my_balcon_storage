@@ -2,7 +2,7 @@
 /// This is the single source of truth for all database schema.
 class DatabaseSchema {
   // Current database version
-  static const int version = 3;
+  static const int version = 1;
 
   // Tables
   static const String createLocationsTable = '''

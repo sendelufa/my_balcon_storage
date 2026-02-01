@@ -448,7 +448,7 @@ class _ItemPlaceholder extends StatelessWidget {
         ),
       ),
       child: Icon(
-        Icons.inventory_2_outlined,
+        Icons.category_outlined,
         size: 24,
         color: isDark
             ? AppColors.textSecondaryDark
@@ -647,6 +647,9 @@ class ContainerCard extends StatelessWidget {
   /// Two-letter type abbreviation (e.g., "Bo" for Box, "Sh" for Shelf)
   final String typeAbbreviation;
 
+  /// Number of items in this container
+  final int itemCount;
+
   /// Callback when card is tapped
   final VoidCallback? onTap;
 
@@ -655,6 +658,7 @@ class ContainerCard extends StatelessWidget {
     required this.name,
     this.description,
     required this.typeAbbreviation,
+    this.itemCount = 0,
     this.onTap,
   });
 
@@ -703,7 +707,7 @@ class ContainerCard extends StatelessWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      name,
+                      itemCount > 0 ? '$name ($itemCount)' : name,
                       style: AppTypography.h6.copyWith(
                         color: textPrimaryColor,
                       ),

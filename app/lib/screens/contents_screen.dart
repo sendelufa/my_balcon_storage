@@ -91,6 +91,7 @@ class _ContentsScreenState extends State<ContentsScreen> {
   // State
   List<domain.Container> _containers = [];
   List<Item> _items = [];
+  Map<int, int> _containerItemCount = {}; // container_id -> item count
   bool _isLoading = true;
   String? _error;
 
@@ -112,9 +113,18 @@ class _ContentsScreenState extends State<ContentsScreen> {
 
       final contents = await widget.source.accept(loader);
 
+      // Calculate item count for each container
+      final itemCounts = <int, int>{};
+      for (final item in contents.items) {
+        if (item.containerId != null) {
+          itemCounts[item.containerId!] = (itemCounts[item.containerId!] ?? 0) + 1;
+        }
+      }
+
       setState(() {
         _containers = contents.containers;
         _items = contents.items;
+        _containerItemCount = itemCounts;
         _isLoading = false;
       });
     } catch (e) {
@@ -122,36 +132,6 @@ class _ContentsScreenState extends State<ContentsScreen> {
         _error = e.toString();
         _isLoading = false;
       });
-    }
-  }
-
-  /// Groups containers by their type for display.
-  Map<domain.ContainerType, List<domain.Container>> _groupContainersByType() {
-    final grouped = <domain.ContainerType, List<domain.Container>>{};
-    for (final container in _containers) {
-      grouped.putIfAbsent(container.type, () => []);
-      grouped[container.type]!.add(container);
-    }
-    return grouped;
-  }
-
-  /// Gets display name for a container type.
-  String _getContainerTypeName(domain.ContainerType type) {
-    switch (type) {
-      case domain.ContainerType.box:
-        return 'Boxes';
-      case domain.ContainerType.shelf:
-        return 'Shelves';
-      case domain.ContainerType.bag:
-        return 'Bags';
-      case domain.ContainerType.closet:
-        return 'Closets';
-      case domain.ContainerType.drawer:
-        return 'Drawers';
-      case domain.ContainerType.cabinet:
-        return 'Cabinets';
-      case domain.ContainerType.other:
-        return 'Other';
     }
   }
 
@@ -205,40 +185,53 @@ class _ContentsScreenState extends State<ContentsScreen> {
     return ListView(
       padding: AppSpacing.pageMargins,
       children: [
-        // Container sections grouped by type
-        ..._buildContainerSections(),
-        // Items section
+        // Containers in 2-column grid
+        if (_containers.isNotEmpty) ...[
+          Wrap(
+            spacing: AppSpacing.sm,
+            runSpacing: AppSpacing.sm,
+            children: _containers.map((container) {
+              return SizedBox(
+                width: (MediaQuery.of(context).size.width -
+                        (AppSpacing.md * 2) -
+                        (AppSpacing.sm)) /
+                    2,
+                child: ContainerCard(
+                  name: container.name,
+                  description: container.description,
+                  typeAbbreviation: container.typeAbbreviation,
+                  itemCount: _containerItemCount[container.id] ?? 0,
+                  onTap: () => _navigateToContainerContents(container),
+                ),
+              );
+            }).toList(),
+          ),
+          const SizedBox(height: AppSpacing.lg),
+        ],
+        // Items section with header
         if (_items.isNotEmpty) ...[
-          const SizedBox(height: AppSpacing.md),
-          _ItemsSection(items: _items),
+          Padding(
+            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+            child: Text(
+              'Items',
+              style: AppTypography.bodySmall.copyWith(
+                color: isDark
+                    ? AppColors.textSecondaryDark
+                    : AppColors.textSecondaryLight,
+                fontWeight: AppTypography.weightSemiBold,
+              ),
+            ),
+          ),
+          ..._items.map((item) => Padding(
+                padding: const EdgeInsets.only(bottom: AppSpacing.sm),
+                child: AppCard.item(
+                  name: item.name,
+                  description: item.description,
+                ),
+              )),
         ],
       ],
     );
-  }
-
-  /// Builds container sections grouped by type.
-  List<Widget> _buildContainerSections() {
-    final grouped = _groupContainersByType();
-    final sections = <Widget>[];
-
-    // Sort types for consistent display
-    final sortedTypes = grouped.keys.toList()
-      ..sort((a, b) => a.name.compareTo(b.name));
-
-    for (final type in sortedTypes) {
-      final containers = grouped[type]!;
-      sections.add(
-        _ContainerSection(
-          type: type,
-          typeName: _getContainerTypeName(type),
-          containers: containers,
-          onTap: _navigateToContainerContents,
-        ),
-      );
-      sections.add(const SizedBox(height: AppSpacing.md));
-    }
-
-    return sections;
   }
 }
 
@@ -321,171 +314,6 @@ class _SourceInfo {
 // ================================
 // WIDGETS
 // ================================
-
-/// Section displaying containers of a specific type.
-class _ContainerSection extends StatelessWidget {
-  final domain.ContainerType type;
-  final String typeName;
-  final List<domain.Container> containers;
-  final void Function(domain.Container) onTap;
-
-  const _ContainerSection({
-    required this.type,
-    required this.typeName,
-    required this.containers,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    if (containers.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        // Section header
-        _SectionHeader(
-          title: typeName,
-          count: containers.length,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        // Container cards
-        Wrap(
-          spacing: AppSpacing.sm,
-          runSpacing: AppSpacing.sm,
-          children: containers
-              .map(
-                (container) => _ContainerCard(
-                  container: container,
-                  onTap: () => onTap(container),
-                ),
-              )
-              .toList(),
-        ),
-      ],
-    );
-  }
-}
-
-/// Section header with title and count.
-class _SectionHeader extends StatelessWidget {
-  final String title;
-  final int count;
-
-  const _SectionHeader({
-    required this.title,
-    required this.count,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return Row(
-      children: [
-        Text(
-          title,
-          style: AppTypography.h4.copyWith(
-            color: isDark
-                ? AppColors.textPrimaryDark
-                : AppColors.textPrimaryLight,
-          ),
-        ),
-        const SizedBox(width: AppSpacing.sm),
-        Container(
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.sm,
-            vertical: AppSpacing.xs,
-          ),
-          decoration: BoxDecoration(
-            color: isDark
-                ? AppColors.primaryTransparent
-                : AppColors.primarySubtle,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-          ),
-          child: Text(
-            count.toString(),
-            style: AppTypography.labelMedium.copyWith(
-              color: isDark ? AppColors.primaryLight : AppColors.primary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Card for displaying a container.
-class _ContainerCard extends StatelessWidget {
-  final domain.Container container;
-  final VoidCallback onTap;
-
-  const _ContainerCard({
-    required this.container,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ContainerCard(
-      name: container.name,
-      description: container.description,
-      typeAbbreviation: container.typeAbbreviation,
-      onTap: onTap,
-    );
-  }
-}
-
-/// Section displaying items directly in the source.
-class _ItemsSection extends StatelessWidget {
-  final List<Item> items;
-
-  const _ItemsSection({required this.items});
-
-  @override
-  Widget build(BuildContext context) {
-    if (items.isEmpty) {
-      return const SizedBox.shrink();
-    }
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _SectionHeader(
-          title: 'Items',
-          count: items.length,
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        ...items.map(
-          (item) => Padding(
-            padding: const EdgeInsets.only(bottom: AppSpacing.sm),
-            child: _ItemCard(item: item),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Card for displaying an item.
-class _ItemCard extends StatelessWidget {
-  final Item item;
-
-  const _ItemCard({required this.item});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard.item(
-      name: item.name,
-      description: item.description,
-    );
-  }
-}
 
 /// Error view with retry option.
 class _ErrorView extends StatelessWidget {
