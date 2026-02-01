@@ -631,3 +631,142 @@ class AppActionCard extends StatelessWidget {
     );
   }
 }
+
+/// Card widget for displaying containers with type badge.
+///
+/// Used in ContentsScreen to show storage containers like Boxes (Bo) and
+/// Shelves (Sh). Features a circular type badge on the left and container
+/// details on the right.
+class ContainerCard extends StatelessWidget {
+  /// Container name
+  final String name;
+
+  /// Optional container description
+  final String? description;
+
+  /// Two-letter type abbreviation (e.g., "Bo" for Box, "Sh" for Shelf)
+  final String typeAbbreviation;
+
+  /// Callback when card is tapped
+  final VoidCallback? onTap;
+
+  const ContainerCard({
+    super.key,
+    required this.name,
+    this.description,
+    required this.typeAbbreviation,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final borderColor = isDark ? AppColors.borderDark : AppColors.borderLight;
+    final backgroundColor =
+        isDark ? AppColors.surfaceDark : AppColors.surfaceLight;
+    final primaryColor = isDark ? AppColors.primaryLight : AppColors.primary;
+    final textPrimaryColor =
+        isDark ? AppColors.textPrimaryDark : AppColors.textPrimaryLight;
+    final textSecondaryColor =
+        isDark ? AppColors.textSecondaryDark : AppColors.textSecondaryLight;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+        child: Container(
+          padding: const EdgeInsets.all(AppSpacing.md),
+          decoration: BoxDecoration(
+            color: backgroundColor,
+            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            border: Border.all(
+              color: borderColor,
+              width: 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              // Type badge
+              _TypeBadge(
+                abbreviation: typeAbbreviation,
+                primaryColor: primaryColor,
+                borderColor: borderColor,
+              ),
+              const SizedBox(width: AppSpacing.md),
+              // Name and description
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      name,
+                      style: AppTypography.h6.copyWith(
+                        color: textPrimaryColor,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (description != null) ...[
+                      const SizedBox(height: AppSpacing.xs),
+                      Text(
+                        description!,
+                        style: AppTypography.bodySmall.copyWith(
+                          color: textSecondaryColor,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Type badge widget for ContainerCard.
+///
+/// Displays a circular badge with a two-letter abbreviation.
+class _TypeBadge extends StatelessWidget {
+  final String abbreviation;
+  final Color primaryColor;
+  final Color borderColor;
+
+  const _TypeBadge({
+    required this.abbreviation,
+    required this.primaryColor,
+    required this.borderColor,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: borderColor,
+          width: 1,
+        ),
+      ),
+      child: Center(
+        child: Text(
+          abbreviation,
+          style: AppTypography.labelMedium.copyWith(
+            color: primaryColor,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
