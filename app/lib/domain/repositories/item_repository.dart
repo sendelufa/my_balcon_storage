@@ -22,13 +22,23 @@ abstract class ItemRepository {
   /// Throws a [RepositoryException] if the operation fails.
   Future<Item?> getById(int id);
 
-  /// Retrieves all items belonging to a specific location.
+  /// Retrieves all items directly in a specific location.
   ///
   /// The [locationId] parameter is the unique identifier of the location.
-  /// Returns a list of [Item] entities associated with the location.
-  /// Returns an empty list if no items exist for the given location.
+  /// Returns a list of [Item] entities directly stored in the location
+  /// (i.e., items where container_id IS NULL).
+  /// Returns an empty list if no items exist directly in the given location.
   /// Throws a [RepositoryException] if the operation fails.
   Future<List<Item>> getByLocationId(int locationId);
+
+  /// Retrieves all items inside a specific container.
+  ///
+  /// The [containerId] parameter is the unique identifier of the container.
+  /// Returns a list of [Item] entities stored inside the container
+  /// (i.e., items where container_id matches the given id).
+  /// Returns an empty list if no items exist inside the given container.
+  /// Throws a [RepositoryException] if the operation fails.
+  Future<List<Item>> getByContainerId(int containerId);
 
   /// Searches for items matching the given query.
   ///
@@ -69,12 +79,20 @@ abstract class ItemRepository {
   /// Throws a [RepositoryException] if the operation fails.
   Future<int> count();
 
-  /// Counts the number of items in a specific location.
+  /// Counts the number of items directly in a specific location.
   ///
   /// The [locationId] parameter is the unique identifier of the location.
-  /// Returns the count of items associated with the location.
+  /// Returns the count of items directly stored in the location
+  /// (i.e., items where container_id IS NULL).
   /// Throws a [RepositoryException] if the operation fails.
   Future<int> countByLocationId(int locationId);
+
+  /// Counts the number of items inside a specific container.
+  ///
+  /// The [containerId] parameter is the unique identifier of the container.
+  /// Returns the count of items stored inside the container.
+  /// Throws a [RepositoryException] if the operation fails.
+  Future<int> countByContainerId(int containerId);
 }
 
 /// Base exception for repository operations.

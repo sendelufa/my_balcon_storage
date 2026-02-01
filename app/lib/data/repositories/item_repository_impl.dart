@@ -16,6 +16,7 @@ import '../../database/database_helper.dart';
 /// final items = await repository.getAll();
 /// final hammer = await repository.getById(1);
 /// final itemsInGarage = await repository.getByLocationId(1);
+/// final itemsInBox = await repository.getByContainerId(5);
 /// final created = await repository.create(Item(...));
 /// ```
 class ItemRepositoryImpl implements ItemRepository {
@@ -92,7 +93,7 @@ class ItemRepositoryImpl implements ItemRepository {
 
       final List<Map<String, dynamic>> maps = await db.query(
         _tableName,
-        where: 'location_id = ?',
+        where: 'location_id = ? AND container_id IS NULL',
         whereArgs: [locationId],
         orderBy: 'name ASC',
       );
@@ -103,6 +104,33 @@ class ItemRepositoryImpl implements ItemRepository {
     } catch (e, stackTrace) {
       throw RepositoryException(
         'Failed to retrieve items for location id: $locationId',
+        _createExceptionDetails(e, stackTrace),
+      );
+    }
+  }
+
+  @override
+  Future<List<Item>> getByContainerId(int containerId) async {
+    try {
+      if (containerId <= 0) {
+        throw ArgumentError('Container id must be positive, got: $containerId');
+      }
+
+      final db = await _databaseHelper.database;
+
+      final List<Map<String, dynamic>> maps = await db.query(
+        _tableName,
+        where: 'container_id = ?',
+        whereArgs: [containerId],
+        orderBy: 'name ASC',
+      );
+
+      return maps.map((map) => Item.fromMap(map)).toList();
+    } on ArgumentError {
+      rethrow;
+    } catch (e, stackTrace) {
+      throw RepositoryException(
+        'Failed to retrieve items for container id: $containerId',
         _createExceptionDetails(e, stackTrace),
       );
     }
@@ -308,7 +336,7 @@ class ItemRepositoryImpl implements ItemRepository {
       final db = await _databaseHelper.database;
 
       final result = await db.rawQuery(
-        'SELECT COUNT(*) as count FROM $_tableName WHERE location_id = ?',
+        'SELECT COUNT(*) as count FROM $_tableName WHERE location_id = ? AND container_id IS NULL',
         [locationId],
       );
 
@@ -318,6 +346,31 @@ class ItemRepositoryImpl implements ItemRepository {
     } catch (e, stackTrace) {
       throw RepositoryException(
         'Failed to count items for location id: $locationId',
+        _createExceptionDetails(e, stackTrace),
+      );
+    }
+  }
+
+  @override
+  Future<int> countByContainerId(int containerId) async {
+    try {
+      if (containerId <= 0) {
+        throw ArgumentError('Container id must be positive, got: $containerId');
+      }
+
+      final db = await _databaseHelper.database;
+
+      final result = await db.rawQuery(
+        'SELECT COUNT(*) as count FROM $_tableName WHERE container_id = ?',
+        [containerId],
+      );
+
+      return Sqflite.firstIntValue(result) ?? 0;
+    } on ArgumentError {
+      rethrow;
+    } catch (e, stackTrace) {
+      throw RepositoryException(
+        'Failed to count items for container id: $containerId',
         _createExceptionDetails(e, stackTrace),
       );
     }
