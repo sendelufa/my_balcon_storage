@@ -101,14 +101,38 @@ class DatabaseHelper {
 
   /// Migration to version 3: Add container_id to items table.
   Future<void> _migrateToVersion3(Database db) async {
-    // Add container_id column to items
-    await db.execute('ALTER TABLE items ADD COLUMN container_id INTEGER');
+    // Check if column already exists before adding (prevents migration failure if run twice)
+    final tableInfo = await db.rawQuery('PRAGMA table_info(items)');
+    final hasContainerId = tableInfo.any((row) => row['name'] == 'container_id');
 
-    // Create index
-    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_container_id ON items(container_id)');
+    if (!hasContainerId) {
+      await db.execute('ALTER TABLE items ADD COLUMN container_id INTEGER');
+    }
 
-    // Also add container_id FK constraint (SQLite limitation: can't add FK via ALTER TABLE)
-    // For existing databases, we'll rely on app-level validation
+    // Check if partial index already exists (from previous migration run)
+    final indexInfo = await db.rawQuery(
+      "SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_items_container_id'",
+    );
+
+    if (indexInfo.isEmpty) {
+      // Create partial index for better performance (only index non-null values)
+      await db.execute(
+        'CREATE INDEX idx_items_container_id ON items(container_id) WHERE container_id IS NOT NULL',
+      );
+    } else {
+      // Index already exists - verify it's the partial version
+      final existingSql = indexInfo.first['sql'] as String? ?? '';
+      if (!existingSql.contains('WHERE container_id IS NOT NULL')) {
+        // Drop non-partial index and recreate as partial
+        await db.execute('DROP INDEX IF EXISTS idx_items_container_id');
+        await db.execute(
+          'CREATE INDEX idx_items_container_id ON items(container_id) WHERE container_id IS NOT NULL',
+        );
+      }
+    }
+
+    // Note: SQLite limitation prevents adding FK constraint via ALTER TABLE
+    // For existing databases, we rely on app-level validation
     // New databases will have the FK from the schema
   }
 

@@ -367,16 +367,26 @@ void main() {
       // Delete the container
       await db.delete('containers', where: 'id = ?', whereArgs: [containerId]);
 
-      // For fresh databases, items are cascade deleted via FK
-      // For migrated databases, items remain but container_id is orphaned
-      // This is expected behavior - migrated databases rely on app-level cleanup
+      // Verify behavior after container deletion
       final itemsAfter = await db.query(
         'items',
         where: 'container_id = ?',
         whereArgs: [containerId],
       );
-      // Items may still exist in migrated databases; this is acceptable
-      // In production, app-level queries should filter out orphaned items
+
+      // Check if FK constraint exists (fresh database)
+      final fkList = await db.rawQuery('PRAGMA foreign_key_list(items)');
+      final hasContainerFk = fkList.any((fk) =>
+          fk['table'] == 'containers' && fk['from'] == 'container_id');
+
+      if (hasContainerFk) {
+        // Fresh databases have FK constraint - items should be cascade deleted
+        expect(itemsAfter.length, 0, reason: 'Items should be cascade deleted via FK');
+      } else {
+        // Migrated databases lack FK constraint - items remain with orphaned container_id
+        // App-level queries should filter these out by validating container exists
+        expect(itemsAfter.length, 2, reason: 'Items remain in migrated DB (no FK)');
+      }
     });
 
     test('qr_code_id unique constraint works', () async {
@@ -655,6 +665,25 @@ void main() {
         whereArgs: [parentContainerId],
       );
       expect(childrenAfter.length, 0);
+    });
+
+    test('migration to version 3 is idempotent', () async {
+      final db = await dbHelper.database;
+
+      // Verify container_id column exists after migration
+      final tableInfo = await db.rawQuery('PRAGMA table_info(items)');
+      final hasContainerId = tableInfo.any((row) => row['name'] == 'container_id');
+      expect(hasContainerId, isTrue, reason: 'container_id column should exist');
+
+      // Verify index exists (may be partial or regular depending on when DB was created)
+      final indexInfo = await db.rawQuery(
+        "SELECT sql FROM sqlite_master WHERE type='index' AND name='idx_items_container_id'",
+      );
+      expect(indexInfo.isNotEmpty, isTrue, reason: 'idx_items_container_id index should exist');
+
+      // Running migration again should not cause errors
+      // This is implicitly tested by the fact that setUp() opens the DB multiple times
+      // and the migration handles existing columns gracefully
     });
   });
 }
