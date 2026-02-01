@@ -138,8 +138,7 @@ class _ContentsScreenState extends State<ContentsScreen> {
 
   /// Navigates to the contents of a container.
   void _navigateToContainerContents(domain.Container container) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: false).push(
       MaterialPageRoute(
         builder: (context) => ContentsScreen(
           source: ContainerSource(container),
@@ -150,8 +149,7 @@ class _ContentsScreenState extends State<ContentsScreen> {
 
   /// Navigates to the item detail screen.
   void _navigateToItemDetail(Item item) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: false).push(
       MaterialPageRoute(
         builder: (context) => ItemDetailScreen(item: item),
       ),

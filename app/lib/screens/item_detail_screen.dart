@@ -152,8 +152,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   /// Navigates to the location contents screen.
   void _navigateToLocation(Location location) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: false).push(
       MaterialPageRoute(
         builder: (context) => ContentsScreen(
           source: LocationSource(location),
@@ -164,8 +163,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
 
   /// Navigates to the container contents screen.
   void _navigateToContainer(domain.Container container) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: false).push(
       MaterialPageRoute(
         builder: (context) => ContentsScreen(
           source: ContainerSource(container),
@@ -177,8 +175,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
   /// Opens full-screen image viewer.
   void _openImageViewer() {
     if (_item?.photoPath == null) return;
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: false).push(
       MaterialPageRoute(
         builder: (context) => _ImageViewer(imagePath: _item!.photoPath!),
       ),

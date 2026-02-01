@@ -55,7 +55,7 @@ RULES:
 | 2.1.1 | Define color palette (primary, secondary, background, text) | Figma file or style guide created | 2 |
 | 2.1.2 | Define typography scale (headings, body, captions) | Font sizes and weights documented | 1 |
 | 2.1.3 | Define spacing system (margins, padding, gaps) | Spacing constants defined (4px base unit) | 1 |
-| 2.1.4 | Define component variants (buttons, inputs, cards) | Component variants documented | 2 |
+| 2.1.4 | Define component variants (buttons, inputs, cards) | Component variants documented | 2 |i mea
 | 2.1.5 | Create reusable Button component | Accepts variants: primary, secondary, danger | 2 |
 | 2.1.6 | Create reusable Input/TextField component | Handles text, validation states, error display | 3 |
 | 2.1.7 | Create reusable Card component | Consistent styling for location/item cards | 2 |
@@ -66,7 +66,7 @@ RULES:
 |---------|------|---------------------|-----------------|
 | 2.2.1 | Design navigation flow (wireframes) | Navigation diagram: Home -> Locations List -> Location Detail -> Items List -> Item Detail | 3 |
 | 2.2.2 | Implement navigation (React Navigation / equivalent) | Stack navigation configured | 3 |
-| 2.2.3 | Create bottom tab navigation (if applicable) | Tabs: Locations, Items, Search | 2 |
+| 2.2.3 | Create bottom tab navigation (if applicable) | Tabs: Locations, Search | 2 |
 | 2.2.4 | Implement back button handling | Proper back stack behavior on both platforms | 2 |
 
 #### 2.3 Base Screens Layout

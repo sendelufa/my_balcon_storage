@@ -10,6 +10,7 @@ import 'contents_screen.dart';
 ///
 /// Displays a list of locations from the database.
 /// Shows loading state while fetching and handles errors gracefully.
+/// Designed to work within a parent Scaffold (HomeScreen).
 class LocationsListScreen extends StatefulWidget {
   const LocationsListScreen({super.key});
 
@@ -47,8 +48,7 @@ class _LocationsListScreenState extends State<LocationsListScreen> {
 
   /// Navigates to the contents screen for a specific location.
   void _navigateToLocation(Location location) {
-    Navigator.push(
-      context,
+    Navigator.of(context, rootNavigator: false).push(
       MaterialPageRoute(
         builder: (context) => ContentsScreen(
           source: LocationSource(location),
@@ -60,35 +60,49 @@ class _LocationsListScreenState extends State<LocationsListScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Locations')),
-        body: const Center(child: CircularProgressIndicator()),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_error != null) {
-      return Scaffold(
-        appBar: AppBar(title: const Text('Locations')),
-        body: Center(child: Text('Error: $_error')),
+      return Center(child: Text('Error: $_error'));
+    }
+
+    if (_locations.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.place_outlined,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No locations yet',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+          ],
+        ),
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('Locations')),
-      body: ListView.separated(
-        padding: const EdgeInsets.all(AppSpacing.md),
-        itemCount: _locations.length,
-        separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
-        itemBuilder: (context, index) {
-          final location = _locations[index];
-          return AppCard.location(
-            name: location.name,
-            description: location.description ?? '',
-            itemCount: 0, // TODO: fetch actual count
-            onTap: () => _navigateToLocation(location),
-          );
-        },
-      ),
+    return ListView.separated(
+      padding: const EdgeInsets.all(AppSpacing.md),
+      itemCount: _locations.length,
+      separatorBuilder: (context, index) => const SizedBox(height: AppSpacing.sm),
+      itemBuilder: (context, index) {
+        final location = _locations[index];
+        return AppCard.location(
+          name: location.name,
+          description: location.description ?? '',
+          itemCount: 0, // TODO: fetch actual count
+          onTap: () => _navigateToLocation(location),
+        );
+      },
     );
   }
 }
