@@ -35,7 +35,9 @@ path: ^1.8.3
 | `get database` | Lazy getter for database instance |
 | `_initDatabase()` | Opens/creates database file |
 | `_onConfigure()` | Enables foreign keys |
-| `_onCreate()` | Creates tables and indexes |
+| `_onCreate()` | Entry point for fresh install |
+| `_onUpgrade()` | Handles version upgrades (added in task 1.2.4) |
+| `_migrateToVersion1()` | Migration to version 1 |
 | `close()` | Closes database connection |
 | `currentTime` | Returns current timestamp in ms |
 
@@ -48,6 +50,23 @@ path: ^1.8.3
 - `locations` table with 7 columns
 - `items` table with 7 columns + FK constraint
 - 4 indexes for search performance
+
+### Migration System (Added in task 1.2.4)
+In task 1.2.4, a formal migration system was added:
+
+- `_onUpgrade()` callback for handling database version changes
+- `_migrateToVersion1()` method for version 1 schema
+- Incremental migration support for future versions
+
+This allows the database to evolve over time:
+```dart
+Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+  if (oldVersion < 1 && newVersion >= 1) {
+    await _migrateToVersion1(db);
+  }
+  // Future migrations will be added here
+}
+```
 
 ### Schema Refactoring (Post-Implementation)
 The inline SQL strings were extracted from `database_helper.dart` into a dedicated `DatabaseSchema` class:

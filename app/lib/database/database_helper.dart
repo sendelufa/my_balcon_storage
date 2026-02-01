@@ -34,6 +34,7 @@ class DatabaseHelper {
       path,
       version: DatabaseSchema.version,
       onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
       onConfigure: _onConfigure,
     );
   }
@@ -45,9 +46,31 @@ class DatabaseHelper {
   }
 
   /// Create database tables on first run.
+  /// Runs all migrations from version 0 to current version.
   Future<void> _onCreate(Database db, int version) async {
-    // Create tables
+    // Run all migrations to bring database from 0 to current version
+    await _migrateToVersion1(db);
+  }
+
+  /// Upgrade database from oldVersion to newVersion.
+  /// Applies migrations incrementally for each version step.
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    // Apply migrations incrementally
+    if (oldVersion < 1 && newVersion >= 1) {
+      await _migrateToVersion1(db);
+    }
+    // Future migrations will be added here:
+    // if (oldVersion < 2 && newVersion >= 2) {
+    //   await _migrateToVersion2(db);
+    // }
+  }
+
+  /// Migration to version 1: Create Locations and Items tables.
+  Future<void> _migrateToVersion1(Database db) async {
+    // Create Locations table
     await db.execute(DatabaseSchema.createLocationsTable);
+
+    // Create Items table
     await db.execute(DatabaseSchema.createItemsTable);
 
     // Create indexes
