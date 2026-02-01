@@ -50,6 +50,7 @@ class DatabaseHelper {
   Future<void> _onCreate(Database db, int version) async {
     // Run all migrations to bring database from 0 to current version
     await _migrateToVersion1(db);
+    await _migrateToVersion2(db);
   }
 
   /// Upgrade database from oldVersion to newVersion.
@@ -59,10 +60,9 @@ class DatabaseHelper {
     if (oldVersion < 1 && newVersion >= 1) {
       await _migrateToVersion1(db);
     }
-    // Future migrations will be added here:
-    // if (oldVersion < 2 && newVersion >= 2) {
-    //   await _migrateToVersion2(db);
-    // }
+    if (oldVersion < 2 && newVersion >= 2) {
+      await _migrateToVersion2(db);
+    }
   }
 
   /// Migration to version 1: Create Locations and Items tables.
@@ -73,13 +73,26 @@ class DatabaseHelper {
     // Create Items table
     await db.execute(DatabaseSchema.createItemsTable);
 
-    // Create indexes
-    for (final indexSql in DatabaseSchema.indexes) {
-      await db.execute(indexSql);
-    }
+    // Create indexes for version 1
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_locations_name ON locations(name)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_locations_qr_code ON locations(qr_code_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_name ON items(name)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_items_location_id ON items(location_id)');
 
     // Seed initial sample data
     await _seedDatabase(db);
+  }
+
+  /// Migration to version 2: Create Containers table.
+  Future<void> _migrateToVersion2(Database db) async {
+    // Create Containers table
+    await db.execute(DatabaseSchema.createContainersTable);
+
+    // Create indexes for containers
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_name ON containers(name)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_parent_location ON containers(parent_location_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_parent_container ON containers(parent_container_id)');
+    await db.execute('CREATE INDEX IF NOT EXISTS idx_containers_type ON containers(type)');
   }
 
   /// Seed database with sample data for first run.
