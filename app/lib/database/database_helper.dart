@@ -77,6 +77,64 @@ class DatabaseHelper {
     for (final indexSql in DatabaseSchema.indexes) {
       await db.execute(indexSql);
     }
+
+    // Seed initial sample data
+    await _seedDatabase(db);
+  }
+
+  /// Seed database with sample data for first run.
+  /// Creates 2 locations with 2 items each.
+  Future<void> _seedDatabase(Database db) async {
+    final now = currentTime;
+
+    // Insert sample locations
+    final location1Id = await db.insert('locations', {
+      'name': 'Garage',
+      'description': 'Main storage area in the garage',
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    final location2Id = await db.insert('locations', {
+      'name': 'Basement',
+      'description': 'Storage shelves in the basement',
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    // Insert sample items for Garage (location1Id)
+    await db.insert('items', {
+      'name': 'Christmas Decorations',
+      'description': 'Holiday ornaments and lights',
+      'location_id': location1Id,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    await db.insert('items', {
+      'name': 'Camping Gear',
+      'description': 'Tent, sleeping bags, and camping equipment',
+      'location_id': location1Id,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    // Insert sample items for Basement (location2Id)
+    await db.insert('items', {
+      'name': 'Tools',
+      'description': 'Power tools and hand tools',
+      'location_id': location2Id,
+      'created_at': now,
+      'updated_at': now,
+    });
+
+    await db.insert('items', {
+      'name': 'Old Books',
+      'description': 'Books stored for safekeeping',
+      'location_id': location2Id,
+      'created_at': now,
+      'updated_at': now,
+    });
   }
 
   /// Close the database connection.
