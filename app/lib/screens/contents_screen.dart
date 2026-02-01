@@ -431,79 +431,11 @@ class _ContainerCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    return AppCard(
-      title: container.name,
-      subtitle: container.description,
-      leading: _ContainerTypeIcon(type: container.type),
-      trailing: Icon(
-        Icons.chevron_right,
-        size: 20,
-        color: isDark
-            ? AppColors.textSecondaryDark
-            : AppColors.textSecondaryLight,
-      ),
-      isTappable: true,
+    return ContainerCard(
+      name: container.name,
+      description: container.description,
+      typeAbbreviation: container.typeAbbreviation,
       onTap: onTap,
-      variant: AppCardVariant.list,
-      margin: EdgeInsets.zero,
-      child: const SizedBox.shrink(),
-    );
-  }
-}
-
-/// Icon for container type.
-class _ContainerTypeIcon extends StatelessWidget {
-  final domain.ContainerType type;
-
-  const _ContainerTypeIcon({required this.type});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-
-    IconData iconData;
-    switch (type) {
-      case domain.ContainerType.box:
-        iconData = Icons.inventory_2_outlined;
-        break;
-      case domain.ContainerType.shelf:
-        iconData = Icons.shelves;
-        break;
-      case domain.ContainerType.bag:
-        iconData = Icons.shopping_bag_outlined;
-        break;
-      case domain.ContainerType.closet:
-        iconData = Icons.door_sliding_outlined;
-        break;
-      case domain.ContainerType.drawer:
-        iconData = Icons.view_agenda_outlined;
-        break;
-      case domain.ContainerType.cabinet:
-        iconData = Icons.countertops_outlined;
-        break;
-      case domain.ContainerType.other:
-        iconData = Icons.category_outlined;
-        break;
-    }
-
-    return Container(
-      width: 40,
-      height: 40,
-      decoration: BoxDecoration(
-        color: isDark
-            ? AppColors.primaryTransparent
-            : AppColors.primarySubtle,
-        borderRadius: BorderRadius.circular(AppSpacing.radiusSm),
-      ),
-      child: Icon(
-        iconData,
-        size: 20,
-        color: isDark ? AppColors.primaryLight : AppColors.primary,
-      ),
     );
   }
 }
